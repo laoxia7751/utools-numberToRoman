@@ -1,0 +1,39 @@
+{
+    "main":"index.html",
+    "version": "1.0.0",
+    "preload": "index.js",
+    "name": "numberToRoma",
+    "description": "阿拉伯数字与罗马数字转换器",
+    "features": [
+        {
+            "code": "numberToRoma",
+            "explain": "数字转罗马数字",
+            "cmds": [
+                "numberToRoma",
+                "roma",
+                {
+                    "type": "regex",
+                    "label": "转阿拉伯数字",
+                    "match": "/[IVXLCDM]+/g",
+                    "minLength": 1
+                },
+                {
+                    "type": "regex",
+                    "label": "转罗马数字",
+                    "match": "/\\d+/g",
+                    "minLength": 1
+                }
+            ]
+        }
+    ],
+    "logo": "./assets/images/logo.png",
+    "platform": [
+        "win32",
+        "darwin",
+        "linux"
+    ],
+    "pluginSetting": {
+        "single": true,
+        "height": 500
+    }
+}

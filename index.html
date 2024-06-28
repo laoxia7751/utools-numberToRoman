@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/index.css">
+  <script src="./assets/js/vue.global.js"></script>
+  <script src="./assets/js/index.full.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="wrap">
+        <div class="top">
+            <el-input class="inputItem" placeholder="请输入要转换的数字" v-model="inputData" clearable @change="transform" @clear="clear">
+                <template #append>
+                    <el-button slot="append" type="primary" @click="transform">转换</el-button>
+                </template>
+            </el-input>
+            <div class="background">
+                <div class="bgWrap">
+                    <ul class="shadows">
+                        <li v-for="i in 9" :key="i"></li>
+                    </ul>
+                    <ul class="drive">
+                        <li v-for="i in 9" :key="i"></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="list">
+            <div class="left item">
+                <div class="headerTitle">阿拉伯数字</div>
+                <div class="wordWrap">
+                    <div class="textContent">{{intData}}</div>
+                    <div class="operation">
+                        <el-button @click="copyData('intData')" type="primary" size="large" class="copyBtn" >复制</el-button>
+                    </div>
+                </div>
+            </div>
+            <div class="right item">
+                <div class="headerTitle">罗马数字</div>
+                <div class="wordWrap">
+                    <div class="textContent">{{romaData}}</div>
+                    <div class="operation">
+                        <el-button @click="copyData('romaData')" type="primary" size="large" class="copyBtn" >复制</el-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    const App = {
+        data() {
+            return {
+                inputData: window.data.payload || '',
+                romaData:'',
+                intData: ''
+            }
+        },
+        mounted() {
+            if(['numberToRoma','roma'].includes(window.data.payload)){
+                this.inputData = ''
+            } else {
+                this.inputData && this.transform()
+            }
+        },
+        methods: {
+            clear(){
+                this.inputData = ''
+                this.romaData = ''
+                this.intData = ''
+            },
+            transform(){
+                if(!this.inputData){
+                    this.romaData = ''
+                    this.inputData = ''
+                    return
+                }
+                // 判断inputData字符串里是否有数字
+                if(/\d+/.test(this.inputData)){
+                    // 如果inputData字符串里匹配出来的数字超过罗马数字最大可转换数字，则弹窗报错
+                    if(this.inputData.match(/\d+/g).some(item => item > 3999)){
+                        this.$message.error('罗马数字最大支持3999')
+                        this.romaData = ''
+                        this.intData = ''
+                        return
+                    }
+                    // 将inputData字符串里的数字部分转成罗马数字，非数字部分不变
+                    this.romaData = this.inputData.replace(/\d+/g, (item) => {
+                        return this.intToRoma(item)
+                    })
+                } else {
+                    this.romaData = this.inputData
+                }
+                // 判断inputData字符串里是否有罗马数字
+                if(/[IVXLCDM]+/.test(this.inputData)){
+                    // 如果罗马数字不符合规范，则弹窗报错
+                    if(this.inputData.match(/[IVXLCDM]+/g).some(item => !/^[IVXLCDM]+$/.test(item))){
+                        this.$message.error('罗马数字只支持I、V、X、L、C、D、M')
+                        this.romaData = ''
+                        this.intData = ''
+                        return
+                    }
+                    // 将inputData字符串里的罗马数字部分转成数字，非罗马数字部分不变
+                    this.intData = this.inputData.replace(/[IVXLCDM]+/g, (item) => {
+                        return this.romaToInt(item)
+                    })
+                } else {
+                    this.intData = this.inputData
+                }
+                
+            },
+            //数字转为阿拉伯数字
+            intToRoma(num) {
+                let map = {1: 'I',5: 'V',10: 'X',50: 'L',100: 'C',500: 'D',1000: 'M'}
+                // 标识位数
+                let digits = 1
+                // 结果
+                let result = ''
+                while(num) {
+                    let current = num % 10
+                    if (current < 4) {
+                        result = map[digits].repeat(current) + result
+                    } else if (current === 4) {
+                        result = map[digits] + map[digits * 5] + result
+                    } else if (current > 4 && current < 9) {
+                        result = map[digits * 5] + map[digits].repeat(current - 5) + result
+                    } else {
+                        result = map[digits] + map[digits * 10] + result
+                    }
+                    digits *= 10
+                    num = Math.trunc(num/10)
+                }
+                return result
+            },
+            romaToInt(s) {
+                let map = {'I': 1,'V': 5,'X': 10,'L': 50,'C': 100,'D': 500,'M':1000}
+                let index = 0
+                let result = 0
+                let len = s.length
+                while(index < len) {
+                    let current = map[s[index]]
+                    result += current
+                    if (index > 0) {
+                        let before = map[s[index-1]]
+                        if ((current === 5 || current === 10) && before === 1) {
+                            result -= 2
+                        }
+                        if ((current === 50 || current === 100) && before === 10) {
+                            result -= 20
+                        }
+                        if ((current === 500 || current === 1000) && before === 100) {
+                            result -= 200
+                        }
+                    }
+                    index++
+                }
+                return result
+            },
+            copyData(type){
+                utools.copyText(this[type])
+                this.$message.success('复制成功')
+            }
+        },
+    }
+    utools.onPluginEnter((data) => {
+        console.log("utools.onPluginEnter ~ data", data)
+        window.data = data;
+        Vue.createApp(App).use(ElementPlus).mount('#app');
+    });
+    
+  </script>
+</body>
+
+</html>
