@@ -33,21 +33,15 @@
         <div class="list">
             <div class="left item">
                 <div class="headerTitle">阿拉伯数字</div>
-                <div class="wordWrap">
-                    <div class="textContent">{{intData}}</div>
-                    <div class="operation">
-                        <el-button @click="copyData('intData')" type="primary" size="large" class="copyBtn" >复制</el-button>
-                    </div>
-                </div>
+                <div class="wordWrap">{{intData}}</div>
             </div>
             <div class="right item">
                 <div class="headerTitle">罗马数字</div>
-                <div class="wordWrap">
-                    <div class="textContent">{{romaData}}</div>
-                    <div class="operation">
-                        <el-button @click="copyData('romaData')" type="primary" size="large" class="copyBtn" >复制</el-button>
-                    </div>
-                </div>
+                <div class="wordWrap">{{romaData}}</div>
+            </div>
+            <div class="operation">
+                <el-button @click="copyData(inputDataType === 'both' ? 'intData' : inputDataType)" type="primary" size="large" class="copyBtn" >复制</el-button>
+                <el-button @click="copyData('romaData')" type="primary" size="large" class="copyBtn" v-if="inputDataType==='both'">复制</el-button>
             </div>
         </div>
     </div>
@@ -59,7 +53,8 @@
             return {
                 inputData: window.data.payload || '',
                 romaData:'',
-                intData: ''
+                intData: '',
+                inputDataType: ''
             }
         },
         mounted() {
@@ -69,16 +64,33 @@
                 this.inputData && this.transform()
             }
         },
+        watch: {
+            inputData:{
+                immediate: true,
+                handler(val){
+                    // 判断val字符串里，是否同时存在罗马数字与数字两种类型
+                    if (/\d+/.test(val) && /[IVXLCDM]+/.test(val)) {
+                        this.inputDataType = 'both';
+                    } else if (/\d+/.test(val)) {
+                        this.inputDataType = 'number';
+                    } else if (/[IVXLCDM]+/.test(val)) {
+                        this.inputDataType = 'roma';
+                    } else {
+                        this.inputDataType = '';
+                    }
+                }
+            },
+        },
         methods: {
             clear(){
                 this.inputData = ''
                 this.romaData = ''
                 this.intData = ''
+                this.inputDataType = ''
             },
             transform(){
                 if(!this.inputData){
-                    this.romaData = ''
-                    this.inputData = ''
+                    this.clear()
                     return
                 }
                 // 判断inputData字符串里是否有数字
@@ -163,8 +175,20 @@
                 return result
             },
             copyData(type){
-                utools.copyText(this[type])
-                this.$message.success('复制成功')
+                if(["romaData","intData"].includes(type)){
+                    utools.copyText(this[type])
+                    this.$message.success(`${type==='romaData' ?'罗马':'阿拉伯'}数字复制成功`)
+                } else {
+                    if(this.inputDataType === 'number'){
+                        utools.copyText(this.romaData)
+                        this.$message.success('罗马数字复制成功')
+                    } else if(this.inputDataType === 'roma'){
+                        utools.copyText(this.intData)
+                        this.$message.success('阿拉伯数字复制成功')
+                    } else {
+                        this.$message.warning('没有可复制内容')
+                    }
+                }
             }
         },
     }
